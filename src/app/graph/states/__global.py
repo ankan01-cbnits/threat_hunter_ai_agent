@@ -13,3 +13,5 @@ class GlobalState(TypedDict):
     firewall: FirewallState
     server: ServerState
     intel: IntelState
+    baseline: dict
+    anomalies: list
