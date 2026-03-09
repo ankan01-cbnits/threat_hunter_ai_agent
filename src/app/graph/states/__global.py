@@ -1,10 +1,10 @@
 from typing import TypedDict
 
-from auth import AuthState
-from dns import DNSState
-from firewall import FirewallState
-from intel import IntelState
-from server import ServerState
+from app.graph.states.auth import AuthState
+from app.graph.states.dns import DNSState
+from app.graph.states.firewall import FirewallState
+from app.graph.states.intel import IntelState
+from app.graph.states.server import ServerState
 
 
 class GlobalState(TypedDict):
