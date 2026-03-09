@@ -4,24 +4,36 @@
 # -------------------------
 # AUTH VALIDATION
 # -------------------------
+from prettyprinter import pprint
+
+from app.graph.states.__global import GlobalState
+
+
 def validate_auth(state):
 
     anomalies = []
 
     baseline = state["baseline"]
+    auth_state = state["auth"]
 
-    for ip, failures in state["auth"]["failed_attempts_by_ip"].items():
+    events = auth_state.get("events", [])
+    failures_by_ip = auth_state.get("failed_attempts_by_ip", {})
+
+    for event in events:
+
+        ip = event["src_ip"]
+        failures = failures_by_ip.get(ip, 0)
 
         if failures > baseline["auth_failures_per_min"]:
 
             anomalies.append({
                 "type": "auth_bruteforce",
+                "event": event,
                 "src_ip": ip,
                 "failures": failures
             })
 
     return anomalies
-
 
 # -------------------------
 # DNS VALIDATION
@@ -121,7 +133,7 @@ def validate_http(state):
 
             anomalies.append({
                 "type": "http_flood",
-                "src_ip": ip,
+                "event": event,
                 "requests": count
             })
 
@@ -131,7 +143,7 @@ def validate_http(state):
 # -------------------------
 # MASTER VALIDATOR
 # -------------------------
-def baseline_validator(state):
+def baseline_validator(state:GlobalState):
 
     anomalies = []
 
@@ -141,5 +153,7 @@ def baseline_validator(state):
     anomalies += validate_http(state)
 
     state["anomalies"] = anomalies
+    pprint(anomalies)
+    print("------------success------------")
 
     return state

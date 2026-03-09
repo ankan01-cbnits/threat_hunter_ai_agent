@@ -4,6 +4,7 @@ import statistics
 import json
 
 
+
 def parse_fields(parts):
 
     data = {}
@@ -132,6 +133,7 @@ def build_baseline(log_file):
 
 if __name__ == "__main__":
 
-    baseline = build_baseline("normallogs.txt")
+    baseline = build_baseline("src\\baseline\\normallogs.txt")
+    # state["baseline"] = baseline
 
     print(json.dumps(baseline, indent=2))

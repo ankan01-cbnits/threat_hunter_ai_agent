@@ -1,11 +1,12 @@
 import sqlite3
-from langgraph.checkpoint. import SQLiteSaver
+from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import StateGraph,START,END
 from .states.__global import GlobalState
-from ..tools.parse_logs import parse_all_logs
-from ...baseline.baseline_validator import baseline_validator
+# from ..tools.parse_logs import parse_all_logs
+from app.tools.parse_logs import parse_all_logs
+from src.baseline.baseline_validator import baseline_validator 
 
-db_path = "memory/states.db"
+db_path = "src/app/memory/states.db"
 conn = sqlite3.connect(db_path, check_same_thread=False)
 sql_memory = SqliteSaver(conn)
 
@@ -24,4 +25,6 @@ graph_builder.add_edge("parser","baseline_validator")
 graph_builder.add_edge("baseline_validator",END)
 
 runnable_graph=graph_builder.compile(checkpointer=sql_memory)
-runnable_graph.invoke({ })
+
+def graph_compiler():
+    return runnable_graph

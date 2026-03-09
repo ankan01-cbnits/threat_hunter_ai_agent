@@ -2,6 +2,7 @@ import re
 from pathlib import Path
 from typing import List, Dict
 
+from ..graph.states.__global import GlobalState
 from app.graph.states.auth import AuthEvent, SuccessfulLogins, AuthState
 from app.graph.states.dns import DNSEvent, DNSState
 from app.graph.states.firewall import FirewallEvent, FirewallState
@@ -272,11 +273,10 @@ def parse_server_logs() -> ServerState:
 # # -------------------------
 # # MASTER PARSER
 # # -------------------------
-def parse_all_logs():
+def parse_all_logs(state: GlobalState):
 
-    return {
-        "auth": parse_auth_logs(),
-        "dns": parse_dns_logs(),
-        "firewall": parse_firewall_logs(),
-        "server": parse_server_logs()
-    }
+    state["auth"] = parse_auth_logs()
+    state["dns"] = parse_dns_logs()
+    state["firewall"] = parse_firewall_logs()
+    state["server"] = parse_server_logs()
+    return state
