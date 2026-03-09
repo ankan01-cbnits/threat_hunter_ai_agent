@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 from app.tools.parse_logs import parse_all_logs
 
 
