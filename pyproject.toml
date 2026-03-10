@@ -8,8 +8,6 @@ dependencies = [
     "langchain>=1.2.10",
     "langchain-core>=1.2.17",
     "langgraph>=1.0.10",
-    "langgraph-checkpoint-sqlite>=3.0.3",
-    "prettyprinter>=0.18.0",
     "pydantic>=2.12.5",
     "python-dotenv>=1.2.2",
 ]
