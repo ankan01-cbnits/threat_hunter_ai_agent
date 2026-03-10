@@ -1,13 +1,40 @@
 # src/validators/baseline_validator.py
 
+import uuid
+from prettyprinter import pprint
+from app.graph.states.__global import GlobalState
+
+
+# -------------------------
+# STANDARD ANOMALY FORMAT
+# -------------------------
+
+def create_anomaly(
+    anomaly_type,
+    source,
+    timestamp=None,
+    src_ip=None,
+    dst_ip=None,
+    domain=None,
+    severity="medium",
+    details=None
+):
+    return {
+        "id": str(uuid.uuid4()),
+        "type": anomaly_type,
+        "source": source,
+        "timestamp": timestamp,
+        "src_ip": src_ip,
+        "dst_ip": dst_ip,
+        "domain": domain,
+        "severity": severity,
+        "details": details or {}
+    }
+
 
 # -------------------------
 # AUTH VALIDATION
 # -------------------------
-from prettyprinter import pprint
-
-from app.graph.states.__global import GlobalState
-
 
 def validate_auth(state):
 
@@ -26,24 +53,33 @@ def validate_auth(state):
 
         if failures > baseline["auth_failures_per_min"]:
 
-            anomalies.append({
-                "type": "auth_bruteforce",
-                "event": event,
-                "src_ip": ip,
-                "failures": failures
-            })
+            anomalies.append(
+                create_anomaly(
+                    anomaly_type="auth_bruteforce",
+                    source="auth",
+                    timestamp=event["timestamp"],
+                    src_ip=ip,
+                    severity="high",
+                    details={
+                        "failures": failures,
+                        "user": event["user"],
+                        "service": event["service"]
+                    }
+                )
+            )
 
     return anomalies
+
 
 # -------------------------
 # DNS VALIDATION
 # -------------------------
+
 def validate_dns(state):
 
     anomalies = []
 
     baseline = state["baseline"]
-
     dns_state = state["dns"]
 
     for event in dns_state["events"]:
@@ -52,20 +88,35 @@ def validate_dns(state):
 
         if domain not in baseline["allowed_domains"]:
 
-            anomalies.append({
-                "type": "dns_suspicious_domain",
-                "event": event
-            })
+            anomalies.append(
+                create_anomaly(
+                    anomaly_type="dns_suspicious_domain",
+                    source="dns",
+                    timestamp=event["timestamp"],
+                    src_ip=event["src_ip"],
+                    domain=domain,
+                    severity="medium",
+                    details={
+                        "record_type": event["record_type"]
+                    }
+                )
+            )
 
     for ip, count in dns_state["queries_by_ip"].items():
 
         if count > baseline["dns_queries_per_ip_per_min"]:
 
-            anomalies.append({
-                "type": "dns_excessive_queries",
-                "src_ip": ip,
-                "queries": count
-            })
+            anomalies.append(
+                create_anomaly(
+                    anomaly_type="dns_excessive_queries",
+                    source="dns",
+                    src_ip=ip,
+                    severity="medium",
+                    details={
+                        "queries": count
+                    }
+                )
+            )
 
     return anomalies
 
@@ -73,12 +124,12 @@ def validate_dns(state):
 # -------------------------
 # FIREWALL VALIDATION
 # -------------------------
+
 def validate_firewall(state):
 
     anomalies = []
 
     baseline = state["baseline"]
-
     fw_state = state["firewall"]
 
     for event in fw_state["events"]:
@@ -87,20 +138,36 @@ def validate_firewall(state):
 
         if port not in baseline["allowed_ports"]:
 
-            anomalies.append({
-                "type": "suspicious_port",
-                "event": event
-            })
+            anomalies.append(
+                create_anomaly(
+                    anomaly_type="suspicious_port",
+                    source="firewall",
+                    timestamp=event["timestamp"],
+                    src_ip=event["src_ip"],
+                    dst_ip=event["dst_ip"],
+                    severity="medium",
+                    details={
+                        "dst_port": port,
+                        "protocol": event["protocol"]
+                    }
+                )
+            )
 
     for ip, count in fw_state["connections_by_src"].items():
 
         if count > baseline["connections_per_ip_per_min"]:
 
-            anomalies.append({
-                "type": "possible_port_scan",
-                "src_ip": ip,
-                "connections": count
-            })
+            anomalies.append(
+                create_anomaly(
+                    anomaly_type="possible_port_scan",
+                    source="firewall",
+                    src_ip=ip,
+                    severity="high",
+                    details={
+                        "connections": count
+                    }
+                )
+            )
 
     return anomalies
 
@@ -108,12 +175,12 @@ def validate_firewall(state):
 # -------------------------
 # HTTP VALIDATION
 # -------------------------
+
 def validate_http(state):
 
     anomalies = []
 
     baseline = state["baseline"]
-
     server_state = state["server"]
 
     for event in server_state["events"]:
@@ -122,20 +189,35 @@ def validate_http(state):
 
         if domain not in baseline["allowed_domains"]:
 
-            anomalies.append({
-                "type": "c2_domain",
-                "event": event
-            })
+            anomalies.append(
+                create_anomaly(
+                    anomaly_type="c2_domain",
+                    source="http",
+                    timestamp=event["timestamp"],
+                    src_ip=event["src_ip"],
+                    domain=domain,
+                    severity="high",
+                    details={
+                        "uri": event["uri"]
+                    }
+                )
+            )
 
     for ip, count in server_state["requests_by_ip"].items():
 
         if count > baseline["http_requests_per_ip_per_min"]:
 
-            anomalies.append({
-                "type": "http_flood",
-                "event": event,
-                "requests": count
-            })
+            anomalies.append(
+                create_anomaly(
+                    anomaly_type="http_flood",
+                    source="http",
+                    src_ip=ip,
+                    severity="high",
+                    details={
+                        "requests": count
+                    }
+                )
+            )
 
     return anomalies
 
@@ -143,7 +225,8 @@ def validate_http(state):
 # -------------------------
 # MASTER VALIDATOR
 # -------------------------
-def baseline_validator(state:GlobalState):
+
+def baseline_validator(state: GlobalState):
 
     anomalies = []
 
@@ -153,6 +236,7 @@ def baseline_validator(state:GlobalState):
     anomalies += validate_http(state)
 
     state["anomalies"] = anomalies
+
     pprint(anomalies)
     print("------------success------------")
 
