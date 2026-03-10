@@ -4,7 +4,6 @@ from app.tools.ip_reputation import ip_reputation
 
 from langchain_openai import ChatOpenAI
 from langchain.agents import create_agent
-from langchain_core.prompts import ChatPromptTemplate
 from dotenv import load_dotenv
 
 import os
@@ -15,8 +14,12 @@ groq_api_key = os.getenv("GROQ_API_KEY")
 groq_base_url = os.getenv("GROQ_BASE_URL")
 
 
+# -------------------------
+# LLM
+# -------------------------
+
 llm = ChatOpenAI(
-    model="llama-3.1-8b-instant",
+    model="llama-3.3-70b-versatile",
     base_url=groq_base_url,
     api_key=groq_api_key,
     temperature=0.4
@@ -25,75 +28,97 @@ llm = ChatOpenAI(
 tools = [ip_reputation, dns_reputation]
 
 
-prompt = ChatPromptTemplate.from_messages(
-            [
-            (
-            "system",
-            """
-            You are an AI SOC investigation assistant.
-
-            You investigate security incidents and may use tools when needed.
-
-            Available tools:
-            - ip_reputation
-            - dns_reputation
-
-            Rules:
-            • Use ip_reputation when the incident involves an IP.
-            • Use dns_reputation when the incident involves a domain.
-            • Investigate anomalies and determine if the activity is malicious.
-            • Always use ip reputation and domain reputation tool and do not use any other tools 
-            • Do not use web access
-            
-
-            Return a clear SOC investigation summary with recommended action.
-            """
-            ),
-            ("human", "{input}"),
-            ("{agent_scratchpad}")
-            ]
-            )
-
+# -------------------------
+# AGENT
+# -------------------------
 
 agent = create_agent(
     model=llm,
     tools=tools,
-    system_prompt="You are a SOC investigation assistant."
+    system_prompt="""
+You are an AI SOC investigation assistant.
+
+You analyze multiple correlated incidents together.
+
+You may use:
+- ip_reputation
+- dns_reputation
+
+Rules:
+• Use tools only when needed
+• Analyze patterns across incidents
+• Identify suspicious entities
+• Produce a SOC investigation report
+"""
 )
 
 
+# -------------------------
+# INCIDENT COMPRESSION
+# -------------------------
+
+def compress_incident(incident):
+
+    return {
+        "type": incident.get("type"),
+        "entity": incident.get("entity"),
+        "event_count": incident.get("event_count"),
+        "severity": incident.get("severity")
+    }
+
+
+# -------------------------
+# INVESTIGATOR NODE
+# -------------------------
+
 def investigator_agent(state: GlobalState):
-
+    llm_calls = 0
     incidents = state.get("incidents", [])
-    investigations = []
 
-    for incident in incidents:
+    compressed_incidents = [
+        compress_incident(i) for i in incidents
+    ]
 
-        query = f"""
-                Investigate this incident.
+    query = f"""
+        You are investigating correlated security incidents.
 
-                Incident type: {incident["type"]}
-                Entity: {incident["entity"]}
-                Event count: {incident["event_count"]}
+        Compressed Incident Data
+        ------------------------
+        {compressed_incidents}
 
-                Anomalies:
-                {incident["anomalies"]}
-                """
+        Tasks
+        -----
 
-        result = agent.invoke(
-            {"input": query}
-        )
+        1. Identify suspicious IPs and domains.
+        2. Determine attack patterns across incidents.
+        3. Use reputation tools when needed.
+        4. Determine overall risk level.
+        5. Provide recommended SOC response.
 
-        analysis = result["messages"][-1].content
+        Report Format
+        -------------
 
-        print("\n------ Investigation Summary ------")
-        print(analysis)
-        print("-----------------------------------\n")
+        Incident Overview
+        Suspicious Entities
+        Attack Behaviour
+        Risk Level
+        Recommended Actions
+        """
+    llm_calls = llm_calls+1
+    result = agent.invoke(
+        {
+            "messages": [
+                ("user", query)
+            ]
+        }
+    )
 
-        investigations.append({
-            "incident_type": incident["type"],
-            "entity": incident["entity"],
-            "analysis": analysis
-        })
+    analysis = result["messages"][-1].content
 
-    return investigations
+    print("\n------ SOC Investigation Report ------")
+    print(analysis)
+    print("--------------------------------------\n")
+
+    state["investigations"] = analysis
+    print("Total LLM calls:", llm_calls)
+    return state

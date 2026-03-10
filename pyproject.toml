@@ -10,7 +10,6 @@ dependencies = [
     "langchain-groq>=1.1.2",
     "langchain-openai>=1.1.11",
     "langgraph>=1.0.10",
-    "langgraph-checkpoint>=4.0.1",
     "langgraph-checkpoint-sqlite>=3.0.3",
     "prettyprinter>=0.18.0",
     "pydantic>=2.12.5",
