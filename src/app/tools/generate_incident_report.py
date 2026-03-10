@@ -27,7 +27,7 @@ def generate_incident_report(investigation_analysis: str) -> str:
     )
 
     system_prompt = """
-    You are a cybersecurity reporting assistant responsible for producing professional SOC incident reports for an L2 Security Operations team.
+    You are a SOC assistant responsible for producing professional SOC incident reports for an L2 Security Operations team.
 
     Transform investigator analysis into a structured incident report.
 

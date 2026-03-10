@@ -2,6 +2,7 @@ import sqlite3
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import StateGraph,START,END
 
+from app.agents.report_generator import report_agent
 from app.agents.correlation_agent import correlation_agent
 from app.agents.investigator import investigator_agent
 from .states.__global import GlobalState
@@ -19,15 +20,15 @@ graph_builder.add_node("parser",parse_all_logs)
 graph_builder.add_node("baseline_validator",baseline_validator)
 graph_builder.add_node("investigator",investigator_agent)
 graph_builder.add_node("correlator",correlation_agent)
-# graph_builder.add_node("reporter",report_generator)
+graph_builder.add_node("reporter",report_agent)
 
 
 graph_builder.add_edge(START,"parser")
 graph_builder.add_edge("parser","baseline_validator")
 graph_builder.add_edge("baseline_validator","correlator")
 graph_builder.add_edge("correlator","investigator")
-# graph_builder.add_edge("investigator","report_generator")
-graph_builder.add_edge("investigator",END)
+graph_builder.add_edge("investigator","reporter")
+graph_builder.add_edge("reporter",END)
 
 runnable_graph=graph_builder.compile(checkpointer=sql_memory)
 
