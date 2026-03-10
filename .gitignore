@@ -23,5 +23,9 @@ venv/
 env/
 .venv/
 
+#database 
+
+
+
 
 
