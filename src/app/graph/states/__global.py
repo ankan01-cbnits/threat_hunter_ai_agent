@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import TypedDict,List
 
 from .auth import AuthState
 from .dns import DNSState
@@ -15,3 +15,5 @@ class GlobalState(TypedDict):
     intel: IntelState
     baseline: dict
     anomalies: list
+    incidents: List[dict]         
+    investigations: List[dict]   
