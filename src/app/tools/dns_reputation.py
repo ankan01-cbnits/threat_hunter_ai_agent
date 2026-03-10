@@ -27,6 +27,7 @@ def dns_reputation(domain: str) -> dict:
     - Cisco Umbrella
     - AlienVault OTX
     - Passive DNS sources
+    Note: Do not use web access.
     """
 
     intel = KNOWN_MALICIOUS_DOMAINS.get(domain)

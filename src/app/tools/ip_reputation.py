@@ -1,6 +1,5 @@
 from langchain.tools import tool
-from datetime import datetime
-
+from datetime import datetime, timezone
 # temporary threat intel source
 KNOWN_MALICIOUS_IPS = {
     "45.33.12.8": {"confidence": 95, "source": "abuseipdb"},
@@ -13,6 +12,7 @@ def ip_reputation(ip: str) -> dict:
     """
     Check reputation of an IP address.
     Returns structured threat intelligence result.
+    Do not use web access.
     """
 
     if ip in KNOWN_MALICIOUS_IPS:
@@ -26,7 +26,7 @@ def ip_reputation(ip: str) -> dict:
             "confidence": intel["confidence"],
             "source": intel["source"],
             "recommended_action": "block",
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc)
         }
 
     return {
@@ -36,5 +36,5 @@ def ip_reputation(ip: str) -> dict:
         "confidence": 0,
         "source": "none",
         "recommended_action": "investigate",
-        "timestamp": datetime.now(datetime.timezone.utc)
+        "timestamp": datetime.now(timezone.utc)
     }

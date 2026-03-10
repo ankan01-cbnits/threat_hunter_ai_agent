@@ -1,74 +1,99 @@
 from app.graph.states.__global import GlobalState
 from app.tools.dns_reputation import dns_reputation
 from app.tools.ip_reputation import ip_reputation
+
 from langchain_openai import ChatOpenAI
-import os 
+from langchain.agents import create_agent
+from langchain_core.prompts import ChatPromptTemplate
 from dotenv import load_dotenv
 
+import os
+
 load_dotenv(override=True)
+
 groq_api_key = os.getenv("GROQ_API_KEY")
 groq_base_url = os.getenv("GROQ_BASE_URL")
 
-def investigator_node(state: GlobalState):
 
-    llm = ChatOpenAI(
-        model="llama-3.1-8b-instant",
-        base_url=groq_base_url,
-        api_key=groq_api_key,
-        temperature=0.4
-    )
+llm = ChatOpenAI(
+    model="llama-3.1-8b-instant",
+    base_url=groq_base_url,
+    api_key=groq_api_key,
+    temperature=0.4
+)
 
-    anomalies = state.get("anomalies", [])
+tools = [ip_reputation, dns_reputation]
+
+
+prompt = ChatPromptTemplate.from_messages(
+            [
+            (
+            "system",
+            """
+            You are an AI SOC investigation assistant.
+
+            You investigate security incidents and may use tools when needed.
+
+            Available tools:
+            - ip_reputation
+            - dns_reputation
+
+            Rules:
+            • Use ip_reputation when the incident involves an IP.
+            • Use dns_reputation when the incident involves a domain.
+            • Investigate anomalies and determine if the activity is malicious.
+            • Always use ip reputation and domain reputation tool and do not use any other tools 
+            • Do not use web access
+            
+
+            Return a clear SOC investigation summary with recommended action.
+            """
+            ),
+            ("human", "{input}"),
+            ("{agent_scratchpad}")
+            ]
+            )
+
+
+agent = create_agent(
+    model=llm,
+    tools=tools,
+    system_prompt="You are a SOC investigation assistant."
+)
+
+
+def investigator_agent(state: GlobalState):
+
+    incidents = state.get("incidents", [])
     investigations = []
 
-    for anomaly in anomalies:
+    for incident in incidents:
 
-        event = anomaly.get("event", {})
+        query = f"""
+                Investigate this incident.
 
-        src_ip = event.get("src_ip")
-        domain = event.get("query_domain")
+                Incident type: {incident["type"]}
+                Entity: {incident["entity"]}
+                Event count: {incident["event_count"]}
 
-        intel_results = []
+                Anomalies:
+                {incident["anomalies"]}
+                """
 
-        # deterministic enrichment
-        if src_ip:
-            intel_results.append(
-                ip_reputation.invoke({"ip": src_ip})
-            )
+        result = agent.invoke(
+            {"input": query}
+        )
 
-        if domain:
-            intel_results.append(
-                dns_reputation.invoke({"domain": domain})
-            )
-
-        # LLM reasoning
-        prompt = f"""
-        You are a SOC investigation assistant.
-
-        Anomaly:
-        {anomaly}
-
-        Threat intelligence results:
-        {intel_results}
-
-        Explain if this is malicious and what action SOC should take. Provide a proper summary for this.
-        """
-
-        analysis = llm.invoke(prompt)
+        analysis = result["messages"][-1].content
 
         print("\n------ Investigation Summary ------")
-        print(analysis.content)
+        print(analysis)
         print("-----------------------------------\n")
 
         investigations.append({
-            "anomaly_type": anomaly.get("type"),
-            "event": event,
-            "intel": intel_results,
-            "analysis": analysis.content
+            "incident_type": incident["type"],
+            "entity": incident["entity"],
+            "analysis": analysis
         })
-
-        print("\n\n\n------ Investigators JSON ------")
-        print(investigations)
-        print("-----------------------------------\n")      
 
     return investigations
