@@ -1,5 +1,6 @@
 import smtplib
 import os
+import markdown
 from email.mime.text import MIMEText
 from dotenv import load_dotenv
 
@@ -12,9 +13,12 @@ EMAIL_TO = os.getenv("EMAIL_TO")
 
 def mailer_agent(state):
 
-    report = state.get("investigations", "No report generated")
+    report_md = state.get("report", "No report generated")
 
-    msg = MIMEText(report)
+    # Convert Markdown → HTML
+    report_html = markdown.markdown(report_md)
+
+    msg = MIMEText(report_html, "html")   # send as HTML
     msg["Subject"] = "Threat Hunter Investigation Report"
     msg["From"] = EMAIL_USER
     msg["To"] = EMAIL_TO

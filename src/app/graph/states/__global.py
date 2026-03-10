@@ -16,4 +16,5 @@ class GlobalState(TypedDict):
     baseline: dict
     anomalies: list
     incidents: List[dict]         
-    investigations: List[dict]   
+    investigations: List[dict] 
+    report:str  
