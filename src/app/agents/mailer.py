@@ -1,5 +1,6 @@
 import smtplib
 import os
+import time
 import markdown
 from email.mime.text import MIMEText
 from dotenv import load_dotenv
@@ -12,6 +13,8 @@ EMAIL_TO = os.getenv("EMAIL_TO")
 
 
 def mailer_agent(state):
+    print("-------------------------SENDING EMAILS-------------------------")
+    time.sleep(2.5)
 
     report_md = state.get("report", "No report generated")
 
@@ -28,6 +31,6 @@ def mailer_agent(state):
         server.login(EMAIL_USER, EMAIL_PASS)
         server.send_message(msg)
 
-    print("✅ Email report sent")
+    print("EMAIL SENT")
 
     return state

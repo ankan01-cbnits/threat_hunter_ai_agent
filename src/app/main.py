@@ -3,7 +3,6 @@ from app.graph.graph_builder import graph_compiler
 def main():
     print("--------------------------------STARTING--------------------------------")
     runnable_graph = graph_compiler()
-    print("--------------------------------YOUR LOGS IN JSON--------------------------------")
     runnable_graph.invoke({ 
     "baseline":{
         "auth_failures_per_min": 4,
@@ -28,7 +27,6 @@ config={
         "thread_id": "soc-session-1"
     }
 })
-print("--------------------------------FINISHED--------------------------------")
 
 
 if __name__ == "__main__":

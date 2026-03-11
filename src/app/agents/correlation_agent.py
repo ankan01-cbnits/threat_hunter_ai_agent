@@ -1,10 +1,14 @@
 from collections import defaultdict
+import time
 
 from app.graph.states.__global import GlobalState
+from prettyprinter import pprint
 
 
 def correlation_agent(state:GlobalState):
 
+    print("-------------------------SETTING BASELINES-------------------------")
+    time.sleep(0.5)
     anomalies = state["anomalies"]
 
     incidents_by_ip = defaultdict(list)
@@ -43,6 +47,7 @@ def correlation_agent(state:GlobalState):
             "anomalies": events
         })
 
+    # pprint(incidents)
     state["incidents"] = incidents
 
     print(f"Correlated {len(incidents)} incidents")

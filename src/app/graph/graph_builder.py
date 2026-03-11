@@ -1,4 +1,5 @@
 import sqlite3
+import time
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import StateGraph,START,END
 
@@ -15,9 +16,10 @@ db_path = "src/app/memory/states.db"
 conn = sqlite3.connect(db_path, check_same_thread=False)
 sql_memory = SqliteSaver(conn)
 
+#Initializing
 graph_builder = StateGraph(GlobalState)
 
-
+#Nodes
 graph_builder.add_node("parser",parse_all_logs)
 graph_builder.add_node("baseline_validator",baseline_validator)
 graph_builder.add_node("investigator",investigator_agent)
@@ -25,7 +27,7 @@ graph_builder.add_node("correlator",correlation_agent)
 graph_builder.add_node("mailer",mailer_agent)
 graph_builder.add_node("reporter",generate_incident_report)
 
-
+#Egdes
 graph_builder.add_edge(START,"parser")
 graph_builder.add_edge("parser","baseline_validator")
 graph_builder.add_edge("baseline_validator","correlator")
@@ -38,4 +40,6 @@ graph_builder.add_edge("mailer",END)
 runnable_graph=graph_builder.compile(checkpointer=sql_memory)
 
 def graph_compiler():
+    print("Fetching Logs...")
+    time.sleep(2.5)
     return runnable_graph

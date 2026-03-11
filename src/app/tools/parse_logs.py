@@ -1,5 +1,6 @@
 import re
 from pathlib import Path
+import time
 from typing import List, Dict
 
 from ..graph.states.__global import GlobalState
@@ -275,8 +276,13 @@ def parse_server_logs() -> ServerState:
 # # -------------------------
 def parse_all_logs(state: GlobalState):
 
+    print("Parsing logs")
     state["auth"] = parse_auth_logs()
     state["dns"] = parse_dns_logs()
     state["firewall"] = parse_firewall_logs()
     state["server"] = parse_server_logs()
+    print("Processing...")
+    time.sleep(1)
+    print("Updating states...")
+    time.sleep(1)
     return state

@@ -1,5 +1,6 @@
 # src/validators/baseline_validator.py
 
+import time
 import uuid
 from prettyprinter import pprint
 from app.graph.states.__global import GlobalState
@@ -228,6 +229,8 @@ def validate_http(state):
 
 def baseline_validator(state: GlobalState):
 
+    print("Setting baselines...")
+    time.sleep(1.5)
     anomalies = []
 
     anomalies += validate_auth(state)
@@ -237,7 +240,6 @@ def baseline_validator(state: GlobalState):
 
     state["anomalies"] = anomalies
 
-    pprint(anomalies)
-    print("------------success------------")
+    # pprint(anomalies)
 
     return state

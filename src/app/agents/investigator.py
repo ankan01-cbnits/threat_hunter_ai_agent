@@ -1,3 +1,5 @@
+import time
+
 from app.graph.states.__global import GlobalState
 from app.tools.dns_reputation import dns_reputation
 from app.tools.ip_reputation import ip_reputation
@@ -72,6 +74,10 @@ def compress_incident(incident):
 # -------------------------
 
 def investigator_agent(state: GlobalState):
+    print("Investigating...")
+    time.sleep(1)
+    print("Detecting threats...")
+    time.sleep(1)
     llm_calls = 0
     incidents = state.get("incidents", [])
 
@@ -115,10 +121,10 @@ def investigator_agent(state: GlobalState):
 
     analysis = result["messages"][-1].content
 
-    print("\n------ SOC Investigation Report ------")
-    print(analysis)
-    print("--------------------------------------\n")
+    # print("\n------ SOC Investigation Report ------")
+    # print(analysis)
+    # print("--------------------------------------\n")
 
     state["investigations"] = analysis
-    print("Total LLM calls:", llm_calls)
+    # print("Total LLM calls:", llm_calls)
     return state

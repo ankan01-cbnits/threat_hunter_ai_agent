@@ -91,6 +91,7 @@ def generate_incident_report(state:GlobalState):
         """
 
     try:
+        print("Generating Report...")
         response = llm.invoke(
             [
                 SystemMessage(content=system_prompt),
